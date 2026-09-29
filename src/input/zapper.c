@@ -32,6 +32,7 @@ static uint32_t tolerance;
 static uint32_t ZapperStrobe[2];
 
 int switchZapper = 0;
+int zapper_scanline_mode = 0;
 int zapper_trigger_invert_option = 1;
 int zapper_sensor_invert_option = 1;
 
@@ -63,7 +64,9 @@ static void FP_FASTAPASS(3) ZapperFrapper(int w, uint8_t * bg, uint8_t * spr, ui
 
 		if (xe > 256) xe = 256;
 
-		if (scanline >= (zy - (int)tolerance) && scanline <= (zy + (int)tolerance)) {
+		/* Raster-position games must not detect light before the aimed line. */
+		if (zapper_scanline_mode ? scanline == zy :
+			(scanline >= (zy - (int)tolerance) && scanline <= (zy + (int)tolerance))) {
 	#ifdef ROUNDED_TARGET
 			int spread;
 			int dy = scanline - zy;

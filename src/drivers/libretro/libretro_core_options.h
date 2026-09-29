@@ -799,6 +799,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "enabled",
    },
    {
+      "fceumm_zapper_scanline_mode",
+      "Zapper Scanline Timing",
+      NULL,
+      "Detects light only on the aimed scanline while preserving horizontal tolerance. Helps games such as Chiller that determine vertical position from light-sensor timing. Disabled by default.",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "fceumm_zapper_tolerance",
       "Zapper Tolerance",
       NULL,

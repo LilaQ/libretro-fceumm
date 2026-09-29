@@ -337,6 +337,7 @@ extern int show_crosshair;
 extern int option_ramstate;
 extern int zapper_trigger_invert_option;
 extern int zapper_sensor_invert_option;
+extern int zapper_scanline_mode;
 
 /* emulator-specific callback functions */
 
@@ -2350,6 +2351,11 @@ static void check_variables(bool startup)
    {
       FCEU_ZapperSetTolerance(atoi(var.value));
    }
+
+   var.key = "fceumm_zapper_scanline_mode";
+   zapper_scanline_mode = 0;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_scanline_mode = !strcmp(var.value, "enabled");
 
    var.key = "fceumm_mouse_sensitivity";
 
