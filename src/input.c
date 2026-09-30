@@ -34,6 +34,8 @@
 #include "fds.h"
 
 extern INPUTC *FCEU_InitZapper(int w);
+extern int zapper_famicom_dual;
+extern uint8_t FCEU_ReadExpansionZapper(void);
 extern INPUTC *FCEU_InitMouse(int w);
 extern INPUTC *FCEU_InitPowerpadA(int w);
 extern INPUTC *FCEU_InitPowerpadB(int w);
@@ -84,6 +86,10 @@ static DECLFR(JPRead)
 	if (FCExp)
 		if (FCExp->Read)
 			ret = FCExp->Read(A & 1, ret);
+
+	/* A second Famicom gun uses light/trigger bits 1/2 on $4017. */
+	if (zapper_famicom_dual && (A & 1) && JPType[0] == SI_ZAPPER)
+		ret |= FCEU_ReadExpansionZapper();
 
 	ret |= X.DB & 0xC0;
 

@@ -338,6 +338,8 @@ extern int option_ramstate;
 extern int zapper_trigger_invert_option;
 extern int zapper_sensor_invert_option;
 extern int zapper_scanline_mode;
+extern int zapper_hold_trigger;
+extern int zapper_famicom_dual;
 
 /* emulator-specific callback functions */
 
@@ -2351,6 +2353,16 @@ static void check_variables(bool startup)
    {
       FCEU_ZapperSetTolerance(atoi(var.value));
    }
+
+   var.key = "fceumm_zapper_hold_trigger";
+   zapper_hold_trigger = 0;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_hold_trigger = !strcmp(var.value, "enabled");
+
+   var.key = "fceumm_zapper_famicom_dual";
+   zapper_famicom_dual = 0;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_famicom_dual = !strcmp(var.value, "enabled");
 
    var.key = "fceumm_zapper_scanline_mode";
    zapper_scanline_mode = 0;

@@ -33,6 +33,8 @@ static uint32_t ZapperStrobe[2];
 
 int switchZapper = 0;
 int zapper_scanline_mode = 0;
+int zapper_hold_trigger = 0;
+int zapper_famicom_dual = 0;
 int zapper_trigger_invert_option = 1;
 int zapper_sensor_invert_option = 1;
 
@@ -159,6 +161,10 @@ static uint8_t FP_FASTAPASS(1) ReadZapper(int w) {
 	return ret;
 }
 
+uint8_t FCEU_ReadExpansionZapper(void) {
+	return ReadZapper(0) >> 2;
+}
+
 static void FASTAPASS(3) DrawZapper(int w, uint8_t * buf, int arg) {
 	if (arg && !switchZapper)
 		FCEU_DrawGunSight(buf, ZD[w].mzx, ZD[w].mzy);
@@ -179,6 +185,9 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 		ZD[w].mzb = ptr[2];
 	else
 		ZD[w].mzb = !ptr[2];
+
+	if (zapper_hold_trigger)
+		ZD[w].bogo = (ZD[w].mzb & 3) ? 1 : 0;
 
 	if (zapper_sensor_invert_option)
 		ZD[w].mzs = !ptr[3];
