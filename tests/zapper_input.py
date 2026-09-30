@@ -23,7 +23,7 @@ class GameInfo(C.Structure):
 def make_rom():
     # Poll both input registers into RAM; no copyrighted game data.
     prg = bytearray(32768)
-    code = bytes.fromhex('78 d8 a2 ff 9a ad 16 40 8d 00 06 ad 17 40 8d 01 06 4c 05 80')
+    code = bytes.fromhex('78 d8 a2 ff 9a a9 01 8d 16 40 a9 00 8d 16 40 8d 03 06 a2 08 ad 16 40 4a 6e 03 06 ca d0 f6 ad 03 06 8d 02 06 ad 16 40 8d 00 06 ad 17 40 8d 01 06 4c 05 80')
     prg[:len(code)] = code
     prg[-6:] = bytes.fromhex('00 80 00 80 00 80')
     return b'NES\x1a' + bytes([2, 0]) + bytes(10) + prg
@@ -35,6 +35,7 @@ def run(core_path):
     failures = []
     frame = 0
     held_port = 0
+    menu_key = 3
     with tempfile.TemporaryDirectory(prefix='zapper-input-') as directory:
         encoded_directory = directory.encode()
 
@@ -76,7 +77,9 @@ def run(core_path):
             'input_poll': C.CFUNCTYPE(None)(lambda: None),
             'input_state': C.CFUNCTYPE(C.c_int16, C.c_uint, C.c_uint, C.c_uint,
                                       C.c_uint)(lambda port, device, index, key:
-                        int(device == 4 and key == 2 and port == held_port and 10 <= frame < 40)),
+                        int(device == 4 and 10 <= frame < 40 and
+                            ((key == 2 and port == held_port) or
+                             (key == menu_key and port == held_port)))),
         }
         for name, callback in callbacks.items():
             setter = getattr(lib, 'retro_set_' + name)
@@ -97,6 +100,7 @@ def run(core_path):
                     variables[b'fceumm_zapper_hold_trigger'] = b'enabled' if hold else b'disabled'
                     variables[b'fceumm_zapper_mode'] = b'clightgun'
                     for held_port in (0, 1):
+                        menu_key = 3 if held_port == 0 else 6
                         rom = make_rom()
                         path = Path(directory) / 'test.nes'
                         path.write_bytes(rom)
@@ -110,7 +114,7 @@ def run(core_path):
                                 lib.retro_run()
                                 if frame not in (12, 30, 42):
                                     continue
-                                ram = C.string_at(lib.retro_get_memory_data(2) + 0x600, 2)
+                                ram = C.string_at(lib.retro_get_memory_data(2) + 0x600, 3)
                                 active = frame == 12 or (hold and frame == 30)
                                 expected = [0, 0]
                                 if active:
@@ -119,11 +123,13 @@ def run(core_path):
                                         expected[1] |= 0x04
                                 actual = [ram[0] & 0x10, ram[1] & 0x14]
                                 assert actual == expected, (dual, hold, held_port, frame, actual, expected)
+                                expected_menu = (4 if menu_key == 3 else 8) if dual and frame < 40 else 0
+                                assert ram[2] == expected_menu, (dual, frame, ram[2], expected_menu)
                             # With rendering disabled both sensors must report darkness.
                             assert ram[1] & 8
                             if dual:
                                 assert ram[1] & 2
-                            print(f'dual={dual} hold={hold} gun={held_port}: pulse, hold, release and sensor bits passed')
+                            print(f'dual={dual} hold={hold} gun={held_port}: pulse, hold, release, sensor and menu serial bits passed')
                         finally:
                             lib.retro_unload_game()
         finally:

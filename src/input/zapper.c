@@ -35,6 +35,7 @@ int switchZapper = 0;
 int zapper_scanline_mode = 0;
 int zapper_hold_trigger = 0;
 int zapper_famicom_dual = 0;
+uint8_t zapper_menu_buttons = 0;
 int zapper_trigger_invert_option = 1;
 int zapper_sensor_invert_option = 1;
 
@@ -145,6 +146,10 @@ static void FP_FASTAPASS(1) StrobeZapperVS(int w) {
 	ZD[w].zap_readbit = 0;
 }
 
+static void FP_FASTAPASS(1) StrobeZapper(int w) {
+	ZD[w].zap_readbit = 0;
+}
+
 static uint8_t FP_FASTAPASS(1) ReadZapper(int w) {
 	uint8_t ret = 0;
 		
@@ -158,11 +163,19 @@ static uint8_t FP_FASTAPASS(1) ReadZapper(int w) {
 	else if (ZD[w].mzs)
 			ret |= 0x8;	
 
+	if (zapper_famicom_dual && w == 0 && ZD[w].zap_readbit < 8) {
+		ret |= (zapper_menu_buttons >> ZD[w].zap_readbit) & 1;
+		ZD[w].zap_readbit++;
+	}
+
 	return ret;
 }
 
 uint8_t FCEU_ReadExpansionZapper(void) {
-	return ReadZapper(0) >> 2;
+	int readbit = ZD[0].zap_readbit;
+	uint8_t value = ReadZapper(0) >> 2;
+	ZD[0].zap_readbit = readbit;
+	return value;
 }
 
 static void FASTAPASS(3) DrawZapper(int w, uint8_t * buf, int arg) {
@@ -195,7 +208,7 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 		ZD[w].mzs = ptr[3];
 }
 
-static INPUTC ZAPC = { ReadZapper, 0, 0, UpdateZapper, ZapperFrapper, DrawZapper };
+static INPUTC ZAPC = { ReadZapper, 0, StrobeZapper, UpdateZapper, ZapperFrapper, DrawZapper };
 static INPUTC ZAPVSC = { ReadZapperVS, 0, StrobeZapperVS, UpdateZapper, ZapperFrapper, DrawZapper };
 
 #ifdef ROUNDED_TARGET

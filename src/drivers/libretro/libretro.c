@@ -340,6 +340,7 @@ extern int zapper_sensor_invert_option;
 extern int zapper_scanline_mode;
 extern int zapper_hold_trigger;
 extern int zapper_famicom_dual;
+extern uint8_t zapper_menu_buttons;
 
 /* emulator-specific callback functions */
 
@@ -2922,6 +2923,18 @@ static void FCEUD_UpdateInput(void)
    bool palette_next = false;
 
    poll_cb();
+
+   /* Preserve menu Select/Start alongside two guns in expansion mode. */
+   zapper_menu_buttons = 0;
+   if (zapper_famicom_dual)
+   {
+      if (input_cb(0, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A) ||
+          input_cb(1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
+         zapper_menu_buttons |= JOY_SELECT;
+      if (input_cb(0, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START) ||
+          input_cb(1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
+         zapper_menu_buttons |= JOY_START;
+   }
 
    /* Reset input states */
    nes_input.JSReturn = 0;
