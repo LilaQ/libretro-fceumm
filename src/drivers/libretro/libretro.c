@@ -339,6 +339,7 @@ extern int zapper_trigger_invert_option;
 extern int zapper_sensor_invert_option;
 extern int zapper_scanline_mode;
 extern int zapper_mechanized_latch;
+extern int zapper_operation_wolf_latch;
 extern int zapper_hold_trigger;
 extern int zapper_famicom_dual;
 extern uint8_t zapper_menu_buttons;
@@ -2536,6 +2537,14 @@ static void check_variables(bool startup)
        (iNESCart.CRC32 == 0x5ee6008e || iNESCart.CRC32 == 0xb33add12) &&
        environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       zapper_mechanized_latch = !strcmp(var.value, "enabled");
+
+   var.key = "fceumm_zapper_operation_wolf_latch";
+   zapper_operation_wolf_latch = 0;
+   /* Operation Wolf's A3 measurement protocol is cartridge-specific. */
+   if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
+       (iNESCart.CRC32 == 0xedc3662b || iNESCart.CRC32 == 0xd4176458) &&
+       environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_operation_wolf_latch = !strcmp(var.value, "enabled");
 
    var.key = "fceumm_sndrate_hint";
 

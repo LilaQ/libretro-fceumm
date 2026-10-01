@@ -34,6 +34,7 @@ static uint32_t ZapperStrobe[2];
 int switchZapper = 0;
 int zapper_scanline_mode = 0;
 int zapper_mechanized_latch = 0;
+int zapper_operation_wolf_latch = 0;
 int zapper_hold_trigger = 0;
 int zapper_famicom_dual = 0;
 uint8_t zapper_menu_buttons = 0;
@@ -197,9 +198,10 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 	ZD[w].mzx = ptr[0];
 	ZD[w].mzy = ptr[1];
 
-	/* Mechanized Attack scans one shot over several frames. Do not mix
+	/* These opt-in games scan one shot over several frames. Do not mix
 	 * different pointer positions within the same raster measurement. */
-	if (zapper_mechanized_latch && w == 1 && RAM[0x0508]) {
+	if (w == 1 && ((zapper_mechanized_latch && RAM[0x0508]) ||
+	    (zapper_operation_wolf_latch && (RAM[0xa3] == 1 || RAM[0xa3] == 0x40)))) {
 		if (!ZD[w].measurement_active && !ZD[w].measurement_pending) {
 			ZD[w].measurement_x = ptr[0];
 			ZD[w].measurement_y = ptr[1];
@@ -211,7 +213,7 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 		ZD[w].mzy = ZD[w].measurement_y;
 	} else {
 		ZD[w].measurement_active = 0;
-		if (zapper_mechanized_latch && w == 1 &&
+		if ((zapper_mechanized_latch || zapper_operation_wolf_latch) && w == 1 &&
 		    (ptr[2] & 1) && !(ZD[w].mzb & 1)) {
 			ZD[w].measurement_x = ptr[0];
 			ZD[w].measurement_y = ptr[1];
@@ -241,7 +243,7 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 }
 
 void FCEU_ZapperResetMeasurement(void) {
-	if (zapper_mechanized_latch) {
+	if (zapper_mechanized_latch || zapper_operation_wolf_latch) {
 		ZD[1].measurement_active = 0;
 		ZD[1].measurement_pending = 0;
 		ZD[1].zaphit = 0;

@@ -61,6 +61,34 @@ int main(void) {
     for (int i = 0; i < 10; i++) UpdateZapper(1, input, 0);
     RAM[0x508] = 1; UpdateZapper(1, input, 0);
     assert(ZD[1].mzx == 145);
+    /* Operation Wolf uses A3=1/0x40, and ends at A3=0x80. */
+    memset(ZD, 0, sizeof(ZD));
+    zapper_mechanized_latch = 0;
+    zapper_operation_wolf_latch = 1;
+    RAM[0x508] = 255; RAM[0xa3] = 0;
+    input[0] = 48; input[1] = 72; input[2] = 1;
+    UpdateZapper(1, input, 0);
+    RAM[0xa3] = 1; input[0] = 148;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 48);
+    RAM[0xa3] = 0x40; input[0] = 228; input[2] = 2;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 48 && !(ZD[1].mzb & 2) && !ZD[1].bogo);
+    input[0] = 17; UpdateZapper(0, input, 0);
+    input[0] = 217; UpdateZapper(0, input, 0);
+    assert(ZD[0].mzx == 217);
+    input[0] = 228;
+    RAM[0xa3] = 0x80;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 228 && (ZD[1].mzb & 2));
+    RAM[0xa3] = 0x40; input[2] = 0;
+    UpdateZapper(1, input, 0);
+    input[0] = 88; FCEU_ZapperResetMeasurement();
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 88);
+    zapper_operation_wolf_latch = 0;
+    input[0] = 188; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 188);
     puts("Measurement latch: trigger, movement, release, offscreen, secondary weapon, state reset, expiry, other gun and disabled option passed.");
     return 0;
 }

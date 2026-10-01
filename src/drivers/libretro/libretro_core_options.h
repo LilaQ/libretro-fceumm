@@ -860,6 +860,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "disabled",
    },
    {
+      "fceumm_zapper_operation_wolf_latch",
+      "Operation Wolf Stable Zapper Aim",
+      NULL,
+      "Keeps one gun position throughout Operation Wolf's multi-frame raster measurement. Applies only to the supported USA ROM and precision patch with NTSC timing.",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "fceumm_zapper_hold_trigger",
       "Zapper Held Trigger",
       NULL,
