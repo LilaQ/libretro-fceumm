@@ -338,6 +338,7 @@ extern int option_ramstate;
 extern int zapper_trigger_invert_option;
 extern int zapper_sensor_invert_option;
 extern int zapper_scanline_mode;
+extern int zapper_mechanized_latch;
 extern int zapper_hold_trigger;
 extern int zapper_famicom_dual;
 extern uint8_t zapper_menu_buttons;
@@ -2355,6 +2356,15 @@ static void check_variables(bool startup)
       FCEU_ZapperSetTolerance(atoi(var.value));
    }
 
+   var.key = "fceumm_zapper_mechanized_latch";
+   zapper_mechanized_latch = 0;
+   /* Original USA ROM and the hash-checked precision patch. Never apply
+    * this game's RAM protocol to another cartridge. NTSC timing only. */
+   if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
+       (iNESCart.CRC32 == 0x5ee6008e || iNESCart.CRC32 == 0xb33add12) &&
+       environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_mechanized_latch = !strcmp(var.value, "enabled");
+
    var.key = "fceumm_zapper_hold_trigger";
    zapper_hold_trigger = 0;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -3469,7 +3479,10 @@ bool retro_unserialize(const void * data, size_t size)
    if (!data || size < 16 || size > retro_serialize_size() * 4)
       return false;
 
-   return FCEUSS_Load_Mem(data, size) != 0;
+   if (!FCEUSS_Load_Mem(data, size))
+      return false;
+   FCEU_ZapperResetMeasurement();
+   return true;
 }
 
 static int checkGG(char c)

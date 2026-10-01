@@ -1,0 +1,66 @@
+/* Standalone tests of the real Zapper update code. No game ROM is needed.
+ * cc -std=c99 -Isrc/drivers/libretro/libretro-common/include tests/zapper_measurement.c -o /tmp/zapper_measurement && /tmp/zapper_measurement
+ */
+#include <assert.h>
+#include <stdio.h>
+#include "../src/input/zapper.c"
+
+uint8_t RAM[0x800];
+uint8_t PAL;
+int scanline;
+uint32_t timestamp;
+uint64_t timestampbase;
+FCEUGI *GameInfo;
+pal *palo;
+void FCEUPPU_LineUpdate(void) {}
+void FCEU_DrawGunSight(uint8_t *buf, int x, int y) { (void)buf; (void)x; (void)y; }
+
+int main(void) {
+    uint32_t input[4] = {40, 80, 1, 0};
+    zapper_hold_trigger = 1;
+    zapper_mechanized_latch = 1;
+    memset(ZD, 0, sizeof(ZD));
+    UpdateZapper(1, input, 0); /* capture trigger position */
+    input[0] = 90;
+    UpdateZapper(1, input, 0); /* game hasn't started the measurement yet */
+    RAM[0x508] = 1;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 40 && ZD[1].mzy == 80);
+    RAM[0x508] = 255;
+    input[0] = 230; input[1] = 200; input[2] = 2; /* move offscreen, release */
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 40 && ZD[1].mzy == 80);
+    assert(!(ZD[1].mzb & 2) && !ZD[1].bogo);
+    RAM[0x508] = 0;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 230 && ZD[1].mzy == 200 && (ZD[1].mzb & 2));
+
+    /* Secondary weapons can start a measurement without a gun trigger. */
+    RAM[0x508] = 1; input[0] = 75; input[1] = 100; input[2] = 0;
+    UpdateZapper(1, input, 0);
+    input[0] = 200; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 75);
+    FCEU_ZapperResetMeasurement();
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 200); /* no stale latch after a restored state */
+
+    /* Neither the other gun nor a disabled option may freeze input. */
+    input[0] = 15; UpdateZapper(0, input, 0);
+    input[0] = 215; UpdateZapper(0, input, 0);
+    assert(ZD[0].mzx == 215);
+    zapper_mechanized_latch = 0;
+    input[0] = 25; UpdateZapper(1, input, 0);
+    input[0] = 225; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 225);
+
+    /* A trigger ignored by the game must expire instead of latching later. */
+    memset(ZD, 0, sizeof(ZD));
+    zapper_mechanized_latch = 1; RAM[0x508] = 0;
+    input[0] = 45; input[2] = 1; UpdateZapper(1, input, 0);
+    input[0] = 145; input[2] = 0;
+    for (int i = 0; i < 10; i++) UpdateZapper(1, input, 0);
+    RAM[0x508] = 1; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 145);
+    puts("Measurement latch: trigger, movement, release, offscreen, secondary weapon, state reset, expiry, other gun and disabled option passed.");
+    return 0;
+}

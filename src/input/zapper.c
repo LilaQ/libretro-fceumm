@@ -33,6 +33,7 @@ static uint32_t ZapperStrobe[2];
 
 int switchZapper = 0;
 int zapper_scanline_mode = 0;
+int zapper_mechanized_latch = 0;
 int zapper_hold_trigger = 0;
 int zapper_famicom_dual = 0;
 uint8_t zapper_menu_buttons = 0;
@@ -46,6 +47,8 @@ typedef struct {
 	int zappo;
 
 	uint64_t zaphit;
+	uint32_t measurement_x, measurement_y, measurement_offscreen;
+	int measurement_active, measurement_pending;
 } ZAPPER;
 
 static ZAPPER ZD[2];
@@ -194,10 +197,39 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 	ZD[w].mzx = ptr[0];
 	ZD[w].mzy = ptr[1];
 
+	/* Mechanized Attack scans one shot over several frames. Do not mix
+	 * different pointer positions within the same raster measurement. */
+	if (zapper_mechanized_latch && w == 1 && RAM[0x0508]) {
+		if (!ZD[w].measurement_active && !ZD[w].measurement_pending) {
+			ZD[w].measurement_x = ptr[0];
+			ZD[w].measurement_y = ptr[1];
+			ZD[w].measurement_offscreen = ptr[2] & 2;
+		}
+		ZD[w].measurement_pending = 0;
+		ZD[w].measurement_active = 1;
+		ZD[w].mzx = ZD[w].measurement_x;
+		ZD[w].mzy = ZD[w].measurement_y;
+	} else {
+		ZD[w].measurement_active = 0;
+		if (zapper_mechanized_latch && w == 1 &&
+		    (ptr[2] & 1) && !(ZD[w].mzb & 1)) {
+			ZD[w].measurement_x = ptr[0];
+			ZD[w].measurement_y = ptr[1];
+			ZD[w].measurement_offscreen = ptr[2] & 2;
+			/* The game requires two trigger polls before starting a shot. */
+			ZD[w].measurement_pending = 8;
+		} else if (ZD[w].measurement_pending) {
+			ZD[w].measurement_pending--;
+		}
+	}
+
 	if (zapper_trigger_invert_option)
 		ZD[w].mzb = ptr[2];
 	else
 		ZD[w].mzb = !ptr[2];
+
+	if (ZD[w].measurement_active)
+		ZD[w].mzb = (ZD[w].mzb & ~2U) | ZD[w].measurement_offscreen;
 
 	if (zapper_hold_trigger)
 		ZD[w].bogo = (ZD[w].mzb & 3) ? 1 : 0;
@@ -206,6 +238,14 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 		ZD[w].mzs = !ptr[3];
 	else
 		ZD[w].mzs = ptr[3];
+}
+
+void FCEU_ZapperResetMeasurement(void) {
+	if (zapper_mechanized_latch) {
+		ZD[1].measurement_active = 0;
+		ZD[1].measurement_pending = 0;
+		ZD[1].zaphit = 0;
+	}
 }
 
 static INPUTC ZAPC = { ReadZapper, 0, StrobeZapper, UpdateZapper, ZapperFrapper, DrawZapper };

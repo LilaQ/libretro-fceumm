@@ -57,5 +57,6 @@ INPUTCFC *FCEU_InitFTrainerA(void);
 INPUTCFC *FCEU_InitFTrainerB(void);
 
 void FCEU_ZapperSetTolerance(int x);
+void FCEU_ZapperResetMeasurement(void);
 
 #endif

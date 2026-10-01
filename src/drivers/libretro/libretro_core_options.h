@@ -846,6 +846,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "6",
    },
    {
+      "fceumm_zapper_mechanized_latch",
+      "Mechanized Attack Stable Zapper Aim",
+      NULL,
+      "Keeps one gun position throughout Mechanized Attack's multi-frame raster measurement. Applies only to the supported USA ROM and precision patch with NTSC timing.",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "fceumm_zapper_hold_trigger",
       "Zapper Held Trigger",
       NULL,
