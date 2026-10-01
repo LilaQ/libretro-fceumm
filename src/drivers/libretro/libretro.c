@@ -2542,7 +2542,8 @@ static void check_variables(bool startup)
    zapper_operation_wolf_latch = 0;
    /* Operation Wolf's A3 measurement protocol is cartridge-specific. */
    if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
-       (iNESCart.CRC32 == 0xedc3662b || iNESCart.CRC32 == 0xd4176458) &&
+       (iNESCart.CRC32 == 0xedc3662b || iNESCart.CRC32 == 0xd4176458 ||
+        iNESCart.CRC32 == 0x0aeb479b) &&
        environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       zapper_operation_wolf_latch = !strcmp(var.value, "enabled");
 
