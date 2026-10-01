@@ -2356,15 +2356,6 @@ static void check_variables(bool startup)
       FCEU_ZapperSetTolerance(atoi(var.value));
    }
 
-   var.key = "fceumm_zapper_mechanized_latch";
-   zapper_mechanized_latch = 0;
-   /* Original USA ROM and the hash-checked precision patch. Never apply
-    * this game's RAM protocol to another cartridge. NTSC timing only. */
-   if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
-       (iNESCart.CRC32 == 0x5ee6008e || iNESCart.CRC32 == 0xb33add12) &&
-       environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      zapper_mechanized_latch = !strcmp(var.value, "enabled");
-
    var.key = "fceumm_zapper_hold_trigger";
    zapper_hold_trigger = 0;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -2536,6 +2527,15 @@ static void check_variables(bool startup)
          audio_video_updated = 2;
       }
    }
+
+   var.key = "fceumm_zapper_mechanized_latch";
+   zapper_mechanized_latch = 0;
+   /* Original USA ROM and the hash-checked precision patch. Never apply
+    * this game's RAM protocol to another cartridge. NTSC timing only. */
+   if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
+       (iNESCart.CRC32 == 0x5ee6008e || iNESCart.CRC32 == 0xb33add12) &&
+       environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_mechanized_latch = !strcmp(var.value, "enabled");
 
    var.key = "fceumm_sndrate_hint";
 
