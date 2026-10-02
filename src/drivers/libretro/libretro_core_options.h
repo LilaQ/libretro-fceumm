@@ -874,6 +874,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "disabled",
    },
    {
+      "fceumm_zapper_strike_wolf_latch",
+      "Strike Wolf Stable Zapper Aim",
+      NULL,
+      "Keeps one gun position throughout Strike Wolf's multi-frame raster measurement. Applies only to the supported original ROM and precision patch with NTSC timing.",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "fceumm_zapper_hold_trigger",
       "Zapper Held Trigger",
       NULL,

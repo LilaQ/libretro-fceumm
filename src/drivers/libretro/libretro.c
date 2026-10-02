@@ -340,6 +340,7 @@ extern int zapper_sensor_invert_option;
 extern int zapper_scanline_mode;
 extern int zapper_mechanized_latch;
 extern int zapper_operation_wolf_latch;
+extern int zapper_strike_wolf_latch;
 extern int zapper_hold_trigger;
 extern int zapper_famicom_dual;
 extern uint8_t zapper_menu_buttons;
@@ -2546,6 +2547,14 @@ static void check_variables(bool startup)
         iNESCart.CRC32 == 0x0aeb479b) &&
        environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       zapper_operation_wolf_latch = !strcmp(var.value, "enabled");
+
+   var.key = "fceumm_zapper_strike_wolf_latch";
+   zapper_strike_wolf_latch = 0;
+   /* Only these Strike Wolf cartridges use the 4D measurement flag. */
+   if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
+       (iNESCart.CRC32 == 0x143df524 || iNESCart.CRC32 == 0xb4b75fb3) &&
+       environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      zapper_strike_wolf_latch = !strcmp(var.value, "enabled");
 
    var.key = "fceumm_sndrate_hint";
 

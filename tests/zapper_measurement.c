@@ -89,6 +89,26 @@ int main(void) {
     zapper_operation_wolf_latch = 0;
     input[0] = 188; UpdateZapper(1, input, 0);
     assert(ZD[1].mzx == 188);
+    /* Strike Wolf uses 4D; release must not change the captured aim. */
+    memset(ZD, 0, sizeof(ZD));
+    zapper_strike_wolf_latch = 1; RAM[0x4d] = 0;
+    input[0] = 64; input[1] = 96; input[2] = 1;
+    UpdateZapper(1, input, 0);
+    RAM[0x4d] = 1; input[0] = 224; input[2] = 0;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 64 && ZD[1].mzy == 96 && !ZD[1].bogo);
+    input[0] = 12; UpdateZapper(0, input, 0);
+    input[0] = 212; UpdateZapper(0, input, 0);
+    assert(ZD[0].mzx == 212);
+    RAM[0x4d] = 0; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 212);
+    RAM[0x4d] = 1; input[0] = 32; UpdateZapper(1, input, 0);
+    input[0] = 132; FCEU_ZapperResetMeasurement();
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 132);
+    zapper_strike_wolf_latch = 0;
+    input[0] = 232; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 232);
     puts("Measurement latch: trigger, movement, release, offscreen, secondary weapon, state reset, expiry, other gun and disabled option passed.");
     return 0;
 }
