@@ -36,6 +36,7 @@ int zapper_scanline_mode = 0;
 int zapper_mechanized_latch = 0;
 int zapper_operation_wolf_latch = 0;
 int zapper_strike_wolf_latch = 0;
+int zapper_strike_wolf_secondary = 0;
 int zapper_hold_trigger = 0;
 int zapper_famicom_dual = 0;
 uint8_t zapper_menu_buttons = 0;
@@ -51,6 +52,7 @@ typedef struct {
 	uint64_t zaphit;
 	uint32_t measurement_x, measurement_y, measurement_offscreen;
 	int measurement_active, measurement_pending;
+	int measurement_secondary_down;
 } ZAPPER;
 
 static ZAPPER ZD[2];
@@ -216,7 +218,9 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 	} else {
 		ZD[w].measurement_active = 0;
 		if ((zapper_mechanized_latch || zapper_operation_wolf_latch || zapper_strike_wolf_latch) && w == 1 &&
-		    (ptr[2] & 1) && !(ZD[w].mzb & 1)) {
+		    (((ptr[2] & 1) && !(ZD[w].mzb & 1)) ||
+		 (zapper_strike_wolf_latch && zapper_strike_wolf_secondary &&
+		  !ZD[w].measurement_secondary_down))) {
 			ZD[w].measurement_x = ptr[0];
 			ZD[w].measurement_y = ptr[1];
 			ZD[w].measurement_offscreen = ptr[2] & 2;
@@ -226,6 +230,9 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 			ZD[w].measurement_pending--;
 		}
 	}
+
+	if (w == 1)
+		ZD[w].measurement_secondary_down = zapper_strike_wolf_secondary;
 
 	if (zapper_trigger_invert_option)
 		ZD[w].mzb = ptr[2];
@@ -248,6 +255,7 @@ void FCEU_ZapperResetMeasurement(void) {
 	if (zapper_mechanized_latch || zapper_operation_wolf_latch || zapper_strike_wolf_latch) {
 		ZD[1].measurement_active = 0;
 		ZD[1].measurement_pending = 0;
+		ZD[1].measurement_secondary_down = 0;
 		ZD[1].zaphit = 0;
 	}
 }

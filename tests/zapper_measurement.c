@@ -109,6 +109,22 @@ int main(void) {
     zapper_strike_wolf_latch = 0;
     input[0] = 232; UpdateZapper(1, input, 0);
     assert(ZD[1].mzx == 232);
+    /* RMB/controller B captures aim without synthesizing a gun trigger. */
+    memset(ZD, 0, sizeof(ZD)); RAM[0x4d] = 0;
+    zapper_strike_wolf_latch = 1; zapper_strike_wolf_secondary = 1;
+    input[0] = 56; input[1] = 88; input[2] = 0;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].measurement_pending && !ZD[1].bogo);
+    RAM[0x4d] = 1; input[0] = 240;
+    UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 56 && !ZD[1].bogo);
+    zapper_strike_wolf_secondary = 0; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 56);
+    RAM[0x4d] = 0; UpdateZapper(1, input, 0);
+    assert(ZD[1].mzx == 240);
+    zapper_strike_wolf_latch = 0; zapper_strike_wolf_secondary = 1;
+    UpdateZapper(1, input, 0);
+    assert(!ZD[1].measurement_pending && !ZD[1].bogo);
     puts("Measurement latch: trigger, movement, release, offscreen, secondary weapon, state reset, expiry, other gun and disabled option passed.");
     return 0;
 }

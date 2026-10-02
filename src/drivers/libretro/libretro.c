@@ -341,6 +341,7 @@ extern int zapper_scanline_mode;
 extern int zapper_mechanized_latch;
 extern int zapper_operation_wolf_latch;
 extern int zapper_strike_wolf_latch;
+extern int zapper_strike_wolf_secondary;
 extern int zapper_hold_trigger;
 extern int zapper_famicom_dual;
 extern uint8_t zapper_menu_buttons;
@@ -2552,7 +2553,7 @@ static void check_variables(bool startup)
    zapper_strike_wolf_latch = 0;
    /* Only these Strike Wolf cartridges use the 4D measurement flag. */
    if (GameInfo && GameInfo->type == GIT_CART && !PAL && !dendy &&
-       (iNESCart.CRC32 == 0x143df524 || iNESCart.CRC32 == 0xb4b75fb3) &&
+       (iNESCart.CRC32 == 0x143df524 || iNESCart.CRC32 == 0xb4b75fb3 || iNESCart.CRC32 == 0xe7fb0e3f) &&
        environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       zapper_strike_wolf_latch = !strcmp(var.value, "enabled");
 
@@ -3093,6 +3094,10 @@ static void FCEUD_UpdateInput(void)
 
       nes_input.JSReturn |= (input_buf & 0xff) << (player << 3);
    }
+
+   /* Capture Strike Wolf grenade aim on the controller-B press frame. */
+   zapper_strike_wolf_secondary = zapper_strike_wolf_latch &&
+         (nes_input.JSReturn & JOY_B);
 
    /* other inputs*/
    for (port = 0; port < MAX_PORTS; port++)
